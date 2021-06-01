@@ -7,6 +7,16 @@
 - torch 1.7.0 + torchvision 0.8.0 (torch 1.8.0 & 1.8.1 not supported)
 - onnx-simplifier
 - TensorRT 7.2
+- pycuda
+```
+sudo apt-get install build-essential python-dev python-setuptools libboost-python-dev libboost-thread-dev -y
+sudo apt-get install python-numpy python3-numpy -y
+sudo apt-get install libboost-all-dev
+git clone --recursive --branch v2020.1 https://github.com/inducer/pycuda.git
+cd pycuda
+python configure.py --cuda-root=/usr/local/cuda-10.2
+pip install -e .
+```
 
 # Convert to TensorRT (Example: VGG-Transformer)
 ### Step 1. Convert CNN + Transformer to ONNX
@@ -64,3 +74,4 @@ GPU Memory | 2480 Mb | 1613 Mb
 Speed | 1.00x | 2.18x
 # Reference
 - Original Source: https://github.com/pbcquoc/vietocr
+- ONNX Simplifier: https://github.com/daquexian/onnx-simplifier
