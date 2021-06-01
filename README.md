@@ -36,7 +36,7 @@ this will export model to 2 ONNX sub-models called transformer_decoder.onnx (CNN
 ```
 * Simply Transformer Decoder
 ```
-    python -m onnxsim transformer_decoder.onnx transformer_decoder.onnx --dynamic-input-shape --input-shape=["tgt_inp:20,1", "memory:170,1,256"]
+    python -m onnxsim transformer_decoder.onnx transformer_decoder.onnx --dynamic-input-shape --input-shape tgt_inp:20,1 memory:170,1,256
 ```
 ### Step 3. Convert ONNX (simplified) to TensorRT with dynamic shape
 Assume that min image size = 32x128, max image size = 32x768, max batch size = 32, max sequence length = 128
