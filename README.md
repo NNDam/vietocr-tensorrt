@@ -3,7 +3,7 @@
 <img src="https://github.com/pbcquoc/vietocr/raw/master/image/sample.png" width="1000" height="300">
 </p>
 
-# Requirement
+# Requirements
 - torch 1.7.0 + torchvision 0.8.0 (torch 1.8.0 & 1.8.1 not supported)
 - onnx-simplifier
 - TensorRT 7.2
