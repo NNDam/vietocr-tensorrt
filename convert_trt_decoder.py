@@ -52,7 +52,7 @@ memory = torch.randn(170, 1, 256, requires_grad=True)
 model = OCRDecoder(predictor.model)
 model.eval()
 rs = model(tgt_inp, memory)
-print(rs[0].shape, rs[1].shape, rs[2].shape)
+
 dynamic_axes = {'tgt_inp': {0: 'sequence_length'}, \
                 'memory': {0: 'feat_width'}, \
                 'values': {1: 'sequence_length'}, \
