@@ -1,5 +1,4 @@
 from vietocr.tool.config import Cfg
-from vietocr.model.trainer import Trainer
 from vietocr.tool.translate import batch_translate_beam_search
 from vietocr.tool.predictor import Predictor
 import torch
@@ -19,7 +18,7 @@ class OCRDecoder(nn.Module):
         output, memory = self.model.transformer.forward_decoder(tgt_inp, memory)
         output = softmax(output, dim=-1)
         values, indices  = torch.topk(output, 5)
-        return values, indice
+        return values, indices
 
 config = Cfg.load_config_from_name('vgg_transformer')
 dataset_params = {
@@ -44,13 +43,13 @@ config['device'] = 'cpu'
 
 # trainer = Trainer(config, pretrained=True)
 
-predator = Predictor(config)
+predictor = Predictor(config)
 img = Image.open('image/test_2.png')
-print(predator.predict(img))
+print(predictor.predict(img))
 tgt_inp = torch.randint(0, 232, (20, 1))
 memory = torch.randn(170, 1, 256, requires_grad=True)
 
-model = OCRDecoder(predator.model)
+model = OCRDecoder(predictor.model)
 model.eval()
 rs = model(tgt_inp, memory)
 print(rs[0].shape, rs[1].shape, rs[2].shape)

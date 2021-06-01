@@ -15,10 +15,10 @@ class TorchDecoder(nn.Module):
         self.model = model
 
     def forward(self, tgt_inp, memory):
-        output, memory_out = self.model.transformer.forward_decoder(tgt_inp, memory)
+        output, _ = self.model.transformer.forward_decoder(tgt_inp, memory)
         output = softmax(output, dim=-1)
         values, indices  = torch.topk(output, 5)
-        return values, indices, memory_out
+        return values, indices
 
 config = Cfg.load_config_from_name('vgg_transformer')
 dataset_params = {
