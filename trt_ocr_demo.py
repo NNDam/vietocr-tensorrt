@@ -1,7 +1,8 @@
 from PIL import Image
 import time
+import numpy as np
 from exec_backends.trt_loader import TrtOCREncoder, TrtOCRDecoder
-from vietocr.tool.translate import build_model, translate_trt, translate_beam_search, process_input, predict
+from vietocr.tool.translate import build_model, translate_trt, translate_beam_search, process_input, process_image, predict
 from vietocr.model.vocab import Vocab
 from vietocr.tool.config import Cfg
 
@@ -10,13 +11,40 @@ from vietocr.tool.predictor import Predictor
 
 class TrtOCR(object):
     def __init__(self, encoder_model, decoder_model, config):
+        print('[INFO] Load encoder model')
         self.encoder_model = TrtOCREncoder(encoder_model)
+        self.encoder_model.build()
+        print('[INFO] Load decoder model')
         self.decoder_model = TrtOCRDecoder(decoder_model)
+        self.decoder_model.build()
         self.config = config
         self.vocab = Vocab(config['vocab'])
 
+    def preprocess_batch(self, list_img):
+        '''
+            list_img: list of PIL Image
+        '''
+        total_img = len(list_img)
+        # Get max shape
+        batch_width = 0
+        batch_list = []
+        for idx, img in enumerate(list_img):
+            img = process_image(img, self.config['dataset']['image_height'], 
+                    self.config['dataset']['image_min_width'], self.config['dataset']['image_max_width'])
+            im_width = img.shape[2]
+            if im_width > batch_width:
+                batch_width = im_width
+            batch_list.append(img) 
+        # Create batch
+        batch = np.ones((total_img, 3, self.config['dataset']['image_height'], batch_width))
+        for idx, single in enumerate(batch_list):
+            _, height, width = single.shape
+            batch[idx, :, :, :width] = single
+        return batch
+
     def predict(self, img, return_prob = True):
         '''
+            Predict single-line image
             Input:
                 - img: pillow Image
         '''
@@ -35,6 +63,31 @@ class TrtOCR(object):
             return s, prob
         else:
             return s
+
+    def predict_batch(self, list_img, return_prob = True):
+        '''
+            Predict batch of image
+            Input:
+                - img: pillow Image
+        '''
+        tik = time.time()
+        # Preprocess
+        batch = self.preprocess_batch(list_img)    
+        print(batch.shape)    
+        # Feed to CNN + transformer
+        translated_sentence, prob = translate_trt(batch, self.encoder_model, self.decoder_model)
+        # Decode result
+        result = []
+        for i, s in enumerate(translated_sentence):
+            s = translated_sentence[i].tolist()
+            s = self.vocab.decode(s)
+            result.append((s, prob[i]))
+
+        tok = time.time()
+        print(tok - tik)
+
+        return result
+
 
 if __name__ == '__main__':
     config = Cfg.load_config_from_name('vgg_transformer')
@@ -58,15 +111,18 @@ if __name__ == '__main__':
     config['dataset'].update(dataset_params)
     config['device'] = 'cuda:0'
 
-    img = Image.open('test_3.png')
+    img1 = Image.open('image/test.png')
+    img2 = Image.open('image/test_2.png')
+    img3 = Image.open('image/test_3.png')
     # Trt
     ocr_model = TrtOCR('transformer_encoder.trt', 'transformer_decoder.trt', config)
-    ocr_model.predict(img)
-    tik = time.time()
-    for i in range(100):
-        ocr_model.predict(img)
-    tok = time.time()
-    print(tok - tik)
+    print(ocr_model.predict_batch([img1, img2, img3]))
+    # tik = time.time()
+    # for i in range(100):
+    #     print(ocr_model.predict(img))
+    # tok = time.time()
+    # print(tok - tik)
+
     # Base line
     # baseline_model = Predictor(config)
     # baseline_model.model.eval()

@@ -21,6 +21,9 @@ class HostDeviceMem(object):
 
 # Allocates all buffers required for an engine, i.e. host/device inputs/outputs.
 def allocate_buffers(engine):
+    '''
+        Current: fixed value
+    '''
     inputs = []
     outputs = []
     bindings = []
@@ -28,7 +31,7 @@ def allocate_buffers(engine):
     out_shapes = []
     input_shapes = []
     out_names = []
-    max_batch_size = engine.get_profile_shape(0, 0)[2][0]
+    max_batch_size = 32
     # max_batch_size = 1
     # print(max_batch_size)
     for binding in engine:
@@ -41,7 +44,7 @@ def allocate_buffers(engine):
                 if binding_shape[0] == -1:
                     binding_shape = (1,) + binding_shape[1:]
                 if binding_shape[-1] == -1:
-                    binding_shape = binding_shape[:-1] + (512,) 
+                    binding_shape = binding_shape[:-1] + (768,) 
                 print(binding, binding_shape, max_batch_size)
                 size = trt.volume(binding_shape) * max_batch_size
                 dtype = trt.nptype(engine.get_binding_dtype(binding))
@@ -49,14 +52,18 @@ def allocate_buffers(engine):
             elif binding == 'tgt_inp':
                 if binding_shape[0] == -1:
                     binding_shape = (1,) + binding_shape[1:]
-                print(binding, binding_shape, 128)
-                size = trt.volume(binding_shape) * 128 # Max sequence length
+                if binding_shape[-1] == -1:
+                    binding_shape = binding_shape[:-1] + (1,) 
+                # print(binding, binding_shape, 128, max_batch_size)
+                size = trt.volume(binding_shape) * 128 * max_batch_size# Max sequence length
                 dtype = trt.nptype(engine.get_binding_dtype(binding))
             elif binding == 'memory':
                 if binding_shape[0] == -1:
                     binding_shape = (1,) + binding_shape[1:]
-                print(binding, binding_shape, 256)
-                size = trt.volume(binding_shape) * 256 # Max sequence length * end_feature = 128 * 2
+                if binding_shape[1] == -1:
+                    binding_shape = binding_shape[:1] + (1,) + binding_shape[2:]
+                # print(binding, binding_shape, 384, max_batch_size)
+                size = trt.volume(binding_shape) * 384 * max_batch_size # Max features length * end_feature_size = 768/4 * 2
                 dtype = trt.nptype(engine.get_binding_dtype(binding))
             else:
                 raise ValueError("Allocate failed for binding: {}, not implemented".format(binding))
@@ -64,17 +71,20 @@ def allocate_buffers(engine):
             # Output Encoder
             if binding == 'output':
                 if binding_shape[0] == -1:
-                    binding_shape = (256,) + binding_shape[1:] # feature_width
+                    binding_shape = (384,) + binding_shape[1:] # feature_width
                 if binding_shape[1] == -1:
                     binding_shape = binding_shape[:1] + (1,) + binding_shape[2:] # Batch size
-                print(binding, binding_shape, max_batch_size)
+                # print(binding, binding_shape, max_batch_size)
                 size = trt.volume(binding_shape) * max_batch_size
                 dtype = trt.nptype(engine.get_binding_dtype(binding))
+            # Output Decoder
             elif binding == 'values' or binding == 'indices':
+                if binding_shape[0] == -1:
+                    binding_shape = (1,) + binding_shape[1:] # feature_width
                 if binding_shape[1] == -1:
                     binding_shape = binding_shape[:1] + (1,) + binding_shape[2:] # feature_width
-                print(binding, binding_shape, 128)
-                size = trt.volume(binding_shape) * 128 # Max sequence length
+                # print(binding, binding_shape, 128, max_batch_size)
+                size = trt.volume(binding_shape) * 128 * max_batch_size # Max sequence length * max_batch_size
                 dtype = trt.nptype(engine.get_binding_dtype(binding))    
             else:
                 raise ValueError("Allocate failed for binding: {}, not implemented".format(binding))
@@ -145,9 +155,6 @@ class TrtOCREncoder(TrtModel):
             self.build()
 
         input = np.asarray(input)
-        # print(input.shape)
-        # assert(input.shape[-1] % 4 == 0), \
-        #     "Current support only input with dimension 3 (image width) which be multiple of 4, your input: {}".format(input.shape[-1])
         batch_size = input.shape[0]
         feat_width = int(input.shape[-1]/4)
         out_shape = (feat_width*2, batch_size, 256)
@@ -173,7 +180,7 @@ class TrtOCRDecoder(TrtModel):
         tgt_inp = np.asarray(tgt_inp)
         memory = np.asarray(memory)
  
-        shape0 = tgt_inp.shape[0]
+        shape0, batch_size = tgt_inp.shape # Sequence length & batch size
 
         # print(tgt_inp.shape, memory.shape)
         allocate_place_tgt_inp = np.prod(tgt_inp.shape)
@@ -185,7 +192,7 @@ class TrtOCRDecoder(TrtModel):
         self.context.set_binding_shape(0, tgt_inp.shape)
         self.context.set_binding_shape(1, memory.shape)
 
-        out_shape = (1, shape0, 5)
+        out_shape = (batch_size, shape0, 5)
         values, indices = do_inference(
             self.context, bindings=self.bindings,
             inputs=self.inputs, outputs=self.outputs, stream=self.stream)

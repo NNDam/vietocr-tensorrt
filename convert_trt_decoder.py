@@ -15,7 +15,7 @@ class OCRDecoder(nn.Module):
         self.model = model
 
     def forward(self, tgt_inp, memory):
-        output, memory = self.model.transformer.forward_decoder(tgt_inp, memory)
+        output, _ = self.model.transformer.forward_decoder(tgt_inp, memory)
         output = softmax(output, dim=-1)
         values, indices  = torch.topk(output, 5)
         return values, indices
@@ -40,23 +40,22 @@ params = {
 config['trainer'].update(params)
 config['dataset'].update(dataset_params)
 config['device'] = 'cpu'
-
 # trainer = Trainer(config, pretrained=True)
 
-predictor = Predictor(config)
+predator = Predictor(config)
 img = Image.open('image/test_2.png')
-print(predictor.predict(img))
+print(predator.predict(img))
 tgt_inp = torch.randint(0, 232, (20, 1))
 memory = torch.randn(170, 1, 256, requires_grad=True)
 
-model = OCRDecoder(predictor.model)
+model = OCRDecoder(predator.model)
 model.eval()
 rs = model(tgt_inp, memory)
 
-dynamic_axes = {'tgt_inp': {0: 'sequence_length'}, \
-                'memory': {0: 'feat_width'}, \
-                'values': {1: 'sequence_length'}, \
-                'indices': {1: 'sequence_length'}}
+dynamic_axes = {'tgt_inp': {0: 'sequence_length', 1:'batch'}, \
+                'memory': {0: 'feat_width', 1:'batch'}, \
+                'values': {1: 'sequence_length', 0:'batch'}, \
+                'indices': {1: 'sequence_length', 0:'batch'}}
 # Fix triu operator
 torch_triu = torch.triu
 def triu_onnx(x, diagonal=0, out=None):
@@ -72,7 +71,7 @@ torch.onnx.export(model,               # model being run
               (tgt_inp, memory),                         # model input (or a tuple for multiple inputs)
               "transformer_decoder.onnx",   # where to save the model (can be a file or file-like object)
               export_params=True,        # store the trained parameter weights inside the model file
-              opset_version=12,          # the ONNX version to export the model to
+              opset_version=11,          # the ONNX version to export the model to
               do_constant_folding=True,  # whether to execute constant folding for optimization
               input_names = ['tgt_inp', 'memory'],   # the model's input names
               output_names = ['values', 'indices'], # the model's output names

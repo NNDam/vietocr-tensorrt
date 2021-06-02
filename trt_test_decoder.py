@@ -44,8 +44,8 @@ config['device'] = 'cpu'
 trainer = Predictor(config)
 
 # tgt_inp = torch.randint(0, 232, (20, 1))
-tgt_inp = np.random.randint(0, 232, (20, 1))
-memory = np.random.randn(170, 1, 256)
+tgt_inp = np.random.randint(0, 232, (20, 3))
+memory = np.random.randn(170, 3, 256)
 # memory = torch.randn(170, 1, 256, requires_grad=True)
 
 trt_model = TrtOCRDecoder('transformer_decoder.trt')
