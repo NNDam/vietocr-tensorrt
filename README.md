@@ -2,11 +2,27 @@
 <p align="center">
 <img src="https://github.com/pbcquoc/vietocr/raw/master/image/sample.png" width="1000" height="300">
 </p>
+# To do list
+[X] Convert VGG to TensorRT with dynamic shape
+[X] Convert Transformer to TensorRT with dynamic shape
+[X] Dynamic batch inference with TensorRT
+[] Convert Sequence-To-Sequence to TensorRT with dynamic shape
+[] Refactor & Command line
 
-# Requirement
-- torch 1.7.0 + torchvision 0.8.0 (torch 1.8.0 & 1.8.1 not supported)
-- onnx-simplifier
-- TensorRT 7.2
+# Requirements
+* torch 1.7.0 + torchvision 0.8.0 (torch 1.8.0 & 1.8.1 not supported)
+* onnx-simplifier
+* TensorRT 7.2
+* pycuda
+```
+sudo apt-get install build-essential python-dev python-setuptools libboost-python-dev libboost-thread-dev -y
+sudo apt-get install python-numpy python3-numpy -y
+sudo apt-get install libboost-all-dev
+git clone --recursive --branch v2020.1 https://github.com/inducer/pycuda.git
+cd pycuda
+python configure.py --cuda-root=/usr/local/cuda-10.2
+pip install -e .
+```
 
 # Convert to TensorRT (Example: VGG-Transformer)
 ### Step 1. Convert CNN + Transformer to ONNX
@@ -52,7 +68,7 @@ Assume that min image size = 32x128, max image size = 32x768, max batch size = 3
                                 --verbose \
                                 --fp16
 ```
-### Step 4. Run demo
+### Step 4. Run demo (batch inference)
 ```
     python trt_ocr_demo.py
 ```
