@@ -2,12 +2,13 @@
 <p align="center">
 <img src="https://github.com/pbcquoc/vietocr/raw/master/image/sample.png" width="1000" height="300">
 </p>
+
 # To do list
-[X] Convert VGG to TensorRT with dynamic shape
-[X] Convert Transformer to TensorRT with dynamic shape
-[X] Dynamic batch inference with TensorRT
-[] Convert Sequence-To-Sequence to TensorRT with dynamic shape
-[] Refactor & Command line
+- [x] Convert VGG to TensorRT with dynamic shape 
+- [x] Convert Transformer to TensorRT with dynamic shape 
+- [x] Dynamic batch inference with TensorRT 
+- [ ] Convert Sequence-To-Sequence to TensorRT with dynamic shape 
+- [ ] Refactor & easy for user 
 
 # Requirements
 * torch 1.7.0 + torchvision 0.8.0 (torch 1.8.0 & 1.8.1 not supported)
