@@ -1,14 +1,14 @@
-# VietOCR
+# VietOCR-TensorRT
 <p align="center">
 <img src="https://github.com/pbcquoc/vietocr/raw/master/image/sample.png" width="1000" height="300">
 </p>
 
-# To do list
-- [x] Convert VGG to TensorRT with dynamic shape 
-- [x] Convert Transformer to TensorRT with dynamic shape 
-- [x] Dynamic batch inference with TensorRT 
-- [ ] Convert Sequence-To-Sequence to TensorRT with dynamic shape 
-- [ ] Refactor & easy for user 
+# Performance
+VGG-Transformer | Baseline | TensorRT-FP16 
+--- | --- | ---  
+Time | 94.8 ms | 43.4 ms 
+GPU Memory | 2480 Mb | 1613 Mb
+Speed Up | 1.00x | 2.18x
 
 # Requirements
 * torch 1.7.0 + torchvision 0.8.0 (torch 1.8.0 & 1.8.1 not supported)
@@ -73,11 +73,13 @@ Assume that min image size = 32x128, max image size = 32x768, max batch size = 3
 ```
     python trt_ocr_demo.py
 ```
-# Performance
-VGG-Transformer | Baseline | TensorRT-FP16 
---- | --- | ---  
-Time | 94.8 ms | 43.4 ms 
-GPU Memory | 2480 Mb | 1613 Mb
-Speed | 1.00x | 2.18x
+
+# To do list
+- [x] Convert VGG to TensorRT with dynamic shape 
+- [x] Convert Transformer to TensorRT with dynamic shape 
+- [x] Dynamic batch inference with TensorRT 
+- [ ] Convert Sequence-To-Sequence to TensorRT with dynamic shape 
+- [ ] Refactor & easy for user 
+
 # Reference
 - Original Source: https://github.com/pbcquoc/vietocr
